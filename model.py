@@ -36,14 +36,15 @@ def load_model(model, f):
 
 
 class ImageCompressor(nn.Module):
-    def __init__(self):
+    def __init__(self, out_channel_N=128):
         super(ImageCompressor, self).__init__()
-        self.Encoder = Analysis_net()
-        self.Decoder = Synthesis_net()
-        self.bitEstimator = BitEstimator(out_channel_N)
+        self.Encoder = Analysis_net_17(out_channel_N=out_channel_N)
+        self.Decoder = Synthesis_net_17(out_channel_N=out_channel_N)
+        self.bitEstimator = BitEstimator(channel=out_channel_N)
+        self.out_channel_N = out_channel_N
 
     def forward(self, input_image):
-        quant_noise_feature = torch.zeros(input_image.size(0), out_channel_M, input_image.size(2) // 16, input_image.size(3) // 16).cuda()
+        quant_noise_feature = torch.zeros(input_image.size(0), self.out_channel_N, input_image.size(2) // 16, input_image.size(3) // 16).cuda()
         quant_noise_feature = torch.nn.init.uniform_(torch.zeros_like(quant_noise_feature), -0.5, 0.5)
         feature = self.Encoder(input_image)
         batch_size = feature.size()[0]

@@ -88,7 +88,7 @@ def train(epoch, global_step):
         start_time = time.time()
         global_step += 1
         # print("debug", torch.max(input), torch.min(input))
-        clipped_recon_image, mse_loss, bpp_feature, bpp_z, bpp = net(input)
+        clipped_recon_image, mse_loss, bpp = net(input)
         # print("debug", clipped_recon_image.shape, " ", mse_loss.shape, " ", bpp.shape)
         # print("debug", mse_loss, " ", bpp_feature, " ", bpp_z, " ", bpp)
         distribution_loss = bpp
@@ -115,8 +115,6 @@ def train(epoch, global_step):
             elapsed.update(time.time() - start_time)
             losses.update(rd_loss.item())
             bpps.update(bpp.item())
-            bpp_features.update(bpp_feature.item())
-            bpp_zs.update(bpp_z.item())
             mse_losses.update(mse_loss.item())
             # t2 = time.time()
             # compute_time += (t2 - t0)
@@ -126,8 +124,6 @@ def train(epoch, global_step):
             tb_logger.add_scalar('rd_loss', losses.avg, global_step)
             tb_logger.add_scalar('psnr', psnrs.avg, global_step)
             tb_logger.add_scalar('bpp', bpps.avg, global_step)
-            tb_logger.add_scalar('bpp_feature', bpp_features.avg, global_step)
-            tb_logger.add_scalar('bpp_z', bpp_zs.avg, global_step)
             process = global_step / tot_step * 100.0
             log = (' | '.join([
                 f'Step [{global_step}/{tot_step}={process:.2f}%]',
@@ -137,8 +133,6 @@ def train(epoch, global_step):
                 f'Total Loss {losses.val:.3f} ({losses.avg:.3f})',
                 f'PSNR {psnrs.val:.3f} ({psnrs.avg:.3f})',
                 f'Bpp {bpps.val:.5f} ({bpps.avg:.5f})',
-                f'Bpp_feature {bpp_features.val:.5f} ({bpp_features.avg:.5f})',
-                f'Bpp_z {bpp_zs.val:.5f} ({bpp_zs.avg:.5f})',
                 f'MSE {mse_losses.val:.5f} ({mse_losses.avg:.5f})',
             ]))
             logger.info(log)
@@ -162,9 +156,9 @@ def testKodak(step):
         sumMsssimDB = 0
         cnt = 0
         for batch_idx, input in enumerate(test_loader):
-            clipped_recon_image, mse_loss, bpp_feature, bpp_z, bpp = net(input)
-            mse_loss, bpp_feature, bpp_z, bpp = \
-                torch.mean(mse_loss), torch.mean(bpp_feature), torch.mean(bpp_z), torch.mean(bpp)
+            clipped_recon_image, mse_loss, bpp = net(input)
+            mse_loss, bpp = \
+                torch.mean(mse_loss), torch.mean(bpp)
             psnr = 10 * (torch.log(1. / mse_loss) / np.log(10))
             sumBpp += bpp
             sumPsnr += psnr
