@@ -41,7 +41,7 @@ parser.add_argument('--seed', default=234, type=int, help='seed for random funct
 def parse_config(config):
     config = json.load(open(args.config))
     global tot_epoch, tot_step, base_lr, cur_lr, lr_decay, decay_interval, train_lambda, batch_size, \
-        print_freq, save_model_freq
+        print_freq, save_model_freq, cal_step
     if 'tot_epoch' in config:
         tot_epoch = config['tot_epoch']
     if 'tot_step' in config:
@@ -54,6 +54,8 @@ def parse_config(config):
         print_freq = config['print_freq']
     if "save_model_freq" in config:
         save_model_freq = config['save_model_freq']
+    if "cal_step" in config:
+        cal_step = config['cal_step']
     if 'lr' in config:
         if 'base' in config['lr']:
             base_lr = config['lr']['base']
