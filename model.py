@@ -77,13 +77,13 @@ class ImageCompressor(nn.Module):
         x2 = F.avg_pool2d(x1, 2, 2)
         x3 = F.avg_pool2d(x2, 2, 2)
         quant_feat1 = self.round(input_image, x1)
-        quant_feat2 = self.round(input_image, x2)
-        quant_feat3 = self.round(input_image, x3)
+        quant_feat2 = self.round(input_image, x2, upsample=2)
+        quant_feat3 = self.round(input_image, x3, upsample=4)
         quant_mv_upsample1 = self.Decoder.forwardseprate1(quant_feat1)
         quant_mv_upsample2 = self.Decoder.forwardseprate2(quant_feat2)
         quant_mv_upsample3 = self.Decoder.forwardseprate3(quant_feat3)
 
-        _, _,  rdc1 = self.getrd(input_image, quant_mv_upsample1, quant_feat1, 2 ** 6)
+        _, _, rdc1 = self.getrd(input_image, quant_mv_upsample1, quant_feat1, 2 ** 6)
         _, _, rdc2 = self.getrd(input_image, quant_mv_upsample2, quant_feat2, 2 ** 6)
         _, _, rdc3 = self.getrd(input_image, quant_mv_upsample3, quant_feat3, 2 ** 6)
 
@@ -98,7 +98,7 @@ class ImageCompressor(nn.Module):
         mse_loss = torch.mean((recon_image - input_image).pow(2))
 
         def iclr18_estrate_bits_mv(mv, mask):
-            prob = self.bitEstimator_mv(mv + 0.5) - self.bitEstimator_mv(mv - 0.5)
+            prob = self.bitEstimator(mv + 0.5) - self.bitEstimator(mv - 0.5)
             total_bits = torch.sum(torch.clamp(-1.0 * torch.log(prob + 1e-5) / math.log(2.0), 0, 50) * mask)
             return total_bits, prob
 
