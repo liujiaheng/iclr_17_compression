@@ -170,7 +170,7 @@ def testKodak(step):
             psnr = 10 * (torch.log(1. / mse_loss) / np.log(10))
             sumBpp += bpp
             sumPsnr += psnr
-            msssim = ms_ssim(clipped_recon_image.cpu().detach(), input, data_range=1.0, size_average=True)
+            msssim = ms_ssim(clipped_recon_image.cpu().detach(), input.cpu(), data_range=1.0, size_average=True)
             msssimDB = -10 * (torch.log(1-msssim) / np.log(10))
             sumMsssimDB += msssimDB
             sumMsssim += msssim
