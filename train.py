@@ -217,7 +217,7 @@ if __name__ == "__main__":
     logger.info(open(args.config).read())
     parse_config(args.config)
 
-    model = ImageCompressor()
+    model = ImageCompressor(lambda_num=train_lambda)
     if args.pretrain != '':
         logger.info("loading model:{}".format(args.pretrain))
         global_step = load_model(model, args.pretrain)

@@ -7,3 +7,4 @@ from .bitEstimator import BitEstimator
 from .ms_ssim_torch import ms_ssim, ssim
 from .analysis_17 import Analysis_net_17
 from .synthesis_17 import Synthesis_net_17
+from .systhesis_17_block import Synthesis_net_block
