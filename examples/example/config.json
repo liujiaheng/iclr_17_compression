@@ -8,5 +8,6 @@
         "decay_interval": 2200000
     },
     "batch_size": 4,
-    "print_freq": 200
+    "print_freq": 200,
+    "save_model_freq": 5000
 }

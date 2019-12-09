@@ -26,7 +26,7 @@ image_size = 256
 logger = logging.getLogger("ImageCompression")
 tb_logger = None
 global_step = 0
-save_model_freq = 5000
+save_model_freq = 50000
 parser = argparse.ArgumentParser(description='Pytorch reimplement for variational image compression with a scale hyperprior')
 
 parser.add_argument('-n', '--name', default='',
@@ -40,7 +40,8 @@ parser.add_argument('--seed', default=234, type=int, help='seed for random funct
 
 def parse_config(config):
     config = json.load(open(args.config))
-    global tot_epoch, tot_step, base_lr, cur_lr, lr_decay, decay_interval, train_lambda, batch_size, print_freq
+    global tot_epoch, tot_step, base_lr, cur_lr, lr_decay, decay_interval, train_lambda, batch_size, \
+        print_freq, save_model_freq
     if 'tot_epoch' in config:
         tot_epoch = config['tot_epoch']
     if 'tot_step' in config:
@@ -51,6 +52,8 @@ def parse_config(config):
         batch_size = config['batch_size']
     if "print_freq" in config:
         print_freq = config['print_freq']
+    if "save_model_freq" in config:
+        save_model_freq = config['save_model_freq']
     if 'lr' in config:
         if 'base' in config['lr']:
             base_lr = config['lr']['base']
@@ -88,6 +91,7 @@ def train(epoch, global_step):
         start_time = time.time()
         global_step += 1
         # print("debug", torch.max(input), torch.min(input))
+        input = input.cuda()
         clipped_recon_image, mse_loss, bpp = net(input)
         # print("debug", clipped_recon_image.shape, " ", mse_loss.shape, " ", bpp.shape)
         # print("debug", mse_loss, " ", bpp_feature, " ", bpp_z, " ", bpp)
@@ -141,7 +145,9 @@ def train(epoch, global_step):
             # print("Compute time", compute_time)
             # print("Model time", model_time)
         if (global_step % save_model_freq) == 0:
-            save_model(model, 'ckpt', save_path)
+            save_model(model, global_step, save_path)
+            testKodak(global_step)
+            net.train()
     return global_step
 
 
@@ -156,7 +162,9 @@ def testKodak(step):
         sumMsssimDB = 0
         cnt = 0
         for batch_idx, input in enumerate(test_loader):
+            input = input.cuda()
             clipped_recon_image, mse_loss, bpp = net(input)
+            mse_loss = torch.mean((clipped_recon_image - input).pow(2))
             mse_loss, bpp = \
                 torch.mean(mse_loss), torch.mean(bpp)
             psnr = 10 * (torch.log(1. / mse_loss) / np.log(10))
@@ -175,7 +183,14 @@ def testKodak(step):
         sumMsssim /= cnt
         sumMsssimDB /= cnt
         logger.info("Dataset Average result---Bpp:{:.6f}, PSNR:{:.6f}, MS-SSIM:{:.6f}, MS-SSIM-DB:{:.6f}".format(sumBpp, sumPsnr, sumMsssim, sumMsssimDB))
-
+        if tb_logger !=None:
+            logger.info("Add tensorboard---Step:{}".format(step))
+            tb_logger.add_scalar("BPP_Test", sumBpp, step)
+            tb_logger.add_scalar("PSNR_Test", sumPsnr, step)
+            tb_logger.add_scalar("MS-SSIM_Test", sumMsssim, step)
+            tb_logger.add_scalar("MS-SSIM_DB_Test", sumMsssimDB, step)
+        else:
+            logger.info("No need to add tensorboard")
 
 if __name__ == "__main__":
     args = parser.parse_args()
