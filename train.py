@@ -156,7 +156,7 @@ def train(epoch, global_step):
 def testKodak(step):
     with torch.no_grad():
         test_dataset = TestKodakDataset(data_dir='/data1/liujiaheng/data/compression/kodak')
-        test_loader = DataLoader(dataset=test_dataset, shuffle=False, batch_size=1, pin_memory=True)
+        test_loader = DataLoader(dataset=test_dataset, shuffle=False, batch_size=1, pin_memory=True, num_workers=1)
         net.eval()
         sumBpp = 0
         sumPsnr = 0
@@ -236,7 +236,8 @@ if __name__ == "__main__":
     train_loader = DataLoader(dataset=train_dataset,
                               batch_size=batch_size,
                               shuffle=True,
-                              pin_memory=True)
+                              pin_memory=True,
+                              num_workers=2)
     steps_epoch = global_step // (len(train_dataset) // (batch_size))# * gpu_num))
     save_model(model, global_step, save_path)
     for epoch in range(steps_epoch, tot_epoch):
