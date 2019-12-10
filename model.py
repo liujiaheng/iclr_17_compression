@@ -47,19 +47,20 @@ class ImageCompressor(nn.Module):
     def getrd(self, input_image, recon_image, quant_feature, k):
         batch_size = input_image.size()[0]
         # distortion
-        mse_loss = torch.mean((recon_image - input_image).pow(2))
+        # mse_loss = torch.mean((recon_image - input_image).pow(2))
         mseloss = F.avg_pool2d(torch.unsqueeze(torch.mean((recon_image - input_image).pow(2), 1), 1), kernel_size=k, stride=k) * k * k
-
+        mapsize = (mseloss.size(2), mseloss.size(3))
+        maparea = mseloss.size(2) * mseloss.size(3)
         def iclr18_estimate_bits_z(z):
             prob = self.bitEstimator(z + 0.5) - self.bitEstimator(z - 0.5)
-            total_bits = torch.sum(torch.clamp(-1.0 * torch.log(prob + 1e-10) / math.log(2.0), 0, 50))
+            total_bits = torch.unsqueeze(torch.sum(torch.clamp(-1.0 * torch.log(prob + 1e-5) / math.log(2.0), 0, 50), 1), 1)
             return total_bits, prob
 
         total_bits_feature, _ = iclr18_estimate_bits_z(quant_feature)
-        im_shape = input_image.size()
-        bpp_feature = total_bits_feature / (batch_size * im_shape[2] * im_shape[3])
+        feature_area = total_bits_feature.size(2) * total_bits_feature.size(3)
+        bpp_feature = 1. * feature_area / maparea * F.adaptive_avg_pool2d(total_bits_feature, mapsize)
         rd_loss = self.lambda_num * (mseloss) + bpp_feature
-        return mse_loss, bpp_feature, rd_loss
+        return _, bpp_feature, rd_loss
 
     def round(self, input_image, feature, upsample=1):
         quant_noise_feature = torch.zeros(input_image.size(0), self.out_channel_N, input_image.size(2) // 16 // upsample,
