@@ -212,7 +212,7 @@ if __name__ == "__main__":
         filehandler.setFormatter(formatter)
         logger.addHandler(filehandler)
     logger.setLevel(logging.INFO)
-    logger.info("image compression training")
+    logger.info("Image compression training---Branch:block")
     logger.info("config : ")
     logger.info(open(args.config).read())
     parse_config(args.config)
